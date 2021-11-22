@@ -1,0 +1,24 @@
+---
+title: "Experiments and Causality: Final Project"
+date: "12/07/2021"
+author: "Kumar Narayanan, Melindal Leung, Ryan Goding, Vishakh Pillai"
+output: pdf_document
+---
+
+```{r load packages, message=FALSE, warning=FALSE}
+library(data.table)
+
+library(sandwich)
+library(lmtest)
+
+library(AER) 
+
+library(ggplot2) 
+library(patchwork)
+
+library(stargazer)
+library(purrr)
+```
+
+```{r Impact of letter style on AD response, child='./ad_analysis_1.Rmd'}
+```
