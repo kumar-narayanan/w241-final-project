@@ -44,8 +44,13 @@ as.Date(as.POSIXct(end_date, origin="1970-01-01"))
 d[ , .(counts=.N), by=treatment]
 
 # number of records by location
-d[ , .(counts=.N), by=geography]
+ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
+  geom_bar(stat="identity") +
+  scale_x_discrete(guide=guide_axis(angle=45))
 ```
+
+
+
 
 
 
