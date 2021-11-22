@@ -26,7 +26,7 @@ cluster_se <- function(mod) {
   coef(summary(mod, cluster=c("cluster_id")))[, 2]
 }
 ```
-```{r initial data analysis}
+```{r initial data analysis, message=FALSE}
 # what is the size of the data set we're analyzing
 dim(d)
 
@@ -39,4 +39,13 @@ start_date <- min(d$date_time)
 end_date <- max(d$date_time)
 as.Date(as.POSIXct(start_date, origin="1970-01-01"))
 as.Date(as.POSIXct(end_date, origin="1970-01-01"))
+
+# number of records in treatment Vs control
+d[ , .(counts=.N), by=treatment]
+
+# number of records by location
+d[ , .(counts=.N), by=geography]
 ```
+
+
+
