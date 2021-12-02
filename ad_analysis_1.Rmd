@@ -4,6 +4,10 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+library(data.table)
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -14,8 +18,8 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r load draft data, warning=FALSE}
-setwd('/home/rstudio/kumarn/MIDS/w241/w241-final-project')
-d <- fread('./ad_response.csv')
+setwd('~/Desktop/W241/w241-final-project')
+d <- fread('ad_response.csv')
 head(d)
 
 robust_se <- function(mod, type = 'HC3') { 
@@ -47,6 +51,35 @@ d[ , .(counts=.N), by=treatment]
 ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
   geom_bar(stat="identity") +
   scale_x_discrete(guide=guide_axis(angle=45))
+
+# total number of responses based on control and treatment
+ggplot(d[ , .(counts=.N), by=treatment] , aes(x = treatment, y =counts)) +
+  geom_bar(stat = "identity")  +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+
+
+```
+
+
+```{r box plots, message=FALSE}
+#ggbox plot for different cities
+#ggboxplot(, x = geography, y = interest_level)
+ggplot(data = melt(d, id.vars = 9), aes(x=geography, y= interest_level)) + 
+  geom_boxplot(aes(fill=geography))
+```
+
+
+
+
+
+
+```{r statistical analysis, message = FALSE}
+#store values of total control and total treatment values
+total_control = d[ treatment==0, interest_level]
+total_treatment = d[ treatment==1, interest_level]
+#Perform two sample unpaired t-test
+#Null hypothesis: the averages of the treatment and control are equal, alternative is they are not equal
+t.test(total_control, total_treatment, alternative = 'two.sided', var.equal = FALSE)
 ```
 
 
