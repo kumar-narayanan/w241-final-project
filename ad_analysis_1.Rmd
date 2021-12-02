@@ -48,13 +48,14 @@ as.Date(as.POSIXct(end_date, origin="1970-01-01"))
 d[ , .(counts=.N), by=treatment]
 
 # number of records by location
-ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
+ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts, fill = geography)) + 
   geom_bar(stat="identity") +
   scale_x_discrete(guide=guide_axis(angle=45))
 
 # total number of responses based on control and treatment
 ggplot(d[ , .(counts=.N), by=treatment] , aes(x = treatment, y =counts)) +
-  geom_bar(stat = "identity")  +
+  geom_bar(stat = "identity", fill ='steelblue')  +
+  theme_minimal()+
   scale_x_discrete(guide = guide_axis(angle = 45))
 
 
@@ -62,10 +63,24 @@ ggplot(d[ , .(counts=.N), by=treatment] , aes(x = treatment, y =counts)) +
 
 
 ```{r box plots, message=FALSE}
-#ggbox plot for different cities
-#ggboxplot(, x = geography, y = interest_level)
-ggplot(data = melt(d, id.vars = 9), aes(x=geography, y= interest_level)) + 
-  geom_boxplot(aes(fill=geography))
+#create new datatable for boxplots
+DT = data.table(
+  Boise  = d[geography == 'Boise', interest_level],
+  Los_Angeles = d[geography == 'Los Angeles', interest_level],
+  Phoenix  = d[geography == 'Phoenix', interest_level],
+  Portland = d[geography == 'Portland', interest_level],
+  Reno  = d[geography == 'Reno', interest_level],
+  San_Diego = d[geography == 'San Diego', interest_level],
+  Santa_Clara  = d[geography == 'Santa_Clara', interest_level],
+  Seattle = d[geography == 'Seattle', interest_level],
+  Spokane= d[geography == 'Spokane', interest_level],
+  Tuscon = d[geography == 'Tucson', interest_level]
+)
+
+#plot box plots for interest level for each city
+ggplot(data = melt(DT),  aes(x=variable, y = value)) + 
+  geom_boxplot(aes(fill=variable))+
+  scale_x_discrete(guide = guide_axis(angle =45))
 ```
 
 
