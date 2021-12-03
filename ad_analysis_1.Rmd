@@ -67,11 +67,6 @@ ggplot(data = melt(d, id.vars = 9), aes(x=geography, y= interest_level)) +
   geom_boxplot(aes(fill=geography))
 ```
 
-
-
-
-
-
 ```{r statistical analysis, message = FALSE}
 #store values of total control and total treatment values
 total_control = d[ treatment==0, interest_final]
@@ -80,6 +75,13 @@ total_treatment = d[ treatment==1, interest_final]
 #Null hypothesis: the averages of the treatment and control are equal, alternative is they are not equal
 t.test(total_control, total_treatment, alternative = 'two.sided', var.equal = FALSE)
 ```
+
+```{r randomization, covariate check}
+r_mod <- aov(treatment ~ distance + income + population + date_time + submitter, data=d)
+summary(r_mod)
+
+```
+
 ```{r linear regression analysis - base model}
 model1 <- lm(interest_final ~ treatment, data=d)
 summary(model1)
