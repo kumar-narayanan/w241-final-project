@@ -61,10 +61,22 @@ ggplot(d[ , .(counts=.N), by=treatment] , aes(x = treatment, y =counts)) +
 
 
 ```{r box plots, message=FALSE}
-#ggbox plot for different cities
-#ggboxplot(, x = geography, y = interest_level)
-ggplot(data = melt(d, id.vars = 9), aes(x=geography, y= interest_level)) + 
-  geom_boxplot(aes(fill=geography))
+DT = data.table(
+  Boise  = d[geography == 'Boise', interest_final],
+  Los_Angeles = d[geography == 'Los Angeles', interest_final],
+  Phoenix  = d[geography == 'Phoenix', interest_final],
+  Portland = d[geography == 'Portland', interest_final],
+  Reno  = d[geography == 'Reno', interest_final],
+  San_Diego = d[geography == 'San Diego', interest_final],
+  Santa_Clara  = d[geography == 'Santa_Clara', interest_final],
+  Seattle = d[geography == 'Seattle', interest_final],
+  Spokane= d[geography == 'Spokane', interest_final],
+  Tuscon = d[geography == 'Tucson', interest_final]
+)
+#plot box plots for interest level for each city
+ggplot(data = melt(DT),  aes(x=variable, y = value)) + 
+  geom_boxplot(aes(fill=variable))+
+  scale_x_discrete(guide = guide_axis(angle =45))
 ```
 
 ```{r statistical analysis, message = FALSE}
