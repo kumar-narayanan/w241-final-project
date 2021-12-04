@@ -4,6 +4,10 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+library(data.table)
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -14,8 +18,7 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r load draft data, warning=FALSE}
-setwd('/home/rstudio/kumarn/MIDS/w241/w241-final-project')
-d <- fread('./ad_response.csv')
+d <- fread('ad_response - Final.csv')
 head(d)
 
 robust_se <- function(mod, type = 'HC3') { 
@@ -47,10 +50,74 @@ d[ , .(counts=.N), by=treatment]
 ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
   geom_bar(stat="identity") +
   scale_x_discrete(guide=guide_axis(angle=45))
+
+# total number of responses based on control and treatment
+ggplot(d[ , .(counts=.N), by=treatment] , aes(x = treatment, y =counts)) +
+  geom_bar(stat = "identity")  +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+
+
 ```
 
 
+```{r box plots, message=FALSE}
+DT = data.table(
+  Boise  = d[geography == 'Boise', interest_final],
+  Los_Angeles = d[geography == 'Los Angeles', interest_final],
+  Phoenix  = d[geography == 'Phoenix', interest_final],
+  Portland = d[geography == 'Portland', interest_final],
+  Reno  = d[geography == 'Reno', interest_final],
+  San_Diego = d[geography == 'San Diego', interest_final],
+  Santa_Clara  = d[geography == 'Santa_Clara', interest_final],
+  Seattle = d[geography == 'Seattle', interest_final],
+  Spokane= d[geography == 'Spokane', interest_final],
+  Tuscon = d[geography == 'Tucson', interest_final]
+)
+#plot box plots for interest level for each city
+ggplot(data = melt(DT),  aes(x=variable, y = value)) + 
+  geom_boxplot(aes(fill=variable))+
+  scale_x_discrete(guide = guide_axis(angle =45))
+```
 
+```{r statistical analysis, message = FALSE}
+#store values of total control and total treatment values
+total_control = d[ treatment==0, interest_final]
+total_treatment = d[ treatment==1, interest_final]
+#Perform two sample unpaired t-test
+#Null hypothesis: the averages of the treatment and control are equal, alternative is they are not equal
+t.test(total_control, total_treatment, alternative = 'two.sided', var.equal = FALSE)
+```
+
+```{r randomization, covariate check}
+r_mod <- aov(treatment ~ distance + income + population + date_time + submitter, data=d)
+summary(r_mod)
+
+```
+
+```{r linear regression analysis - base model}
+model1 <- lm(interest_final ~ treatment, data=d)
+summary(model1)
+```
+```{r linear regression analysis (con.) - model2}
+model2 <- lm(interest_final ~ treatment + geography, data=d)
+summary(model2)
+
+```
+
+
+```{r linear regression analysis (con.) - model3}
+model3 <- lm(interest_final ~ treatment + population + distance + income, data=d)
+summary(model3)
+```
+
+```{r linear regression analysis - anova tests}
+anova(model1, model2, test='F')
+```
+
+
+```{r linear regression analysis - anova tests}
+anova(model2, model3, test='F')
+```
 
 
 
