@@ -17,7 +17,14 @@ library(ggplot2)
 library(patchwork)
 
 library(stargazer)
+library(broom)
+
 library(purrr)
+library(foreign)
+
+library(magrittr)
+
+library(knitr)
 ```
 
 ```{r Impact of letter style on AD response, child='./ad_analysis_1.Rmd'}
