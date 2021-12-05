@@ -48,17 +48,25 @@ ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) +
   geom_bar(stat="identity") +
   scale_x_discrete(guide=guide_axis(angle=45))
 ```
+
 ```{r get users who have responded more than once}
+# get all users who've responded more that once
 high_interest_users <- d[interest_adjusted > 1]$user_name
+# count each such user only once and sort it
 high_interest_users <- sort(unique(high_interest_users))
+# get all column names in the original data table
 cols <- colnames(d)
+# create an empty data frame with col names same as the original data table
 dt_high_interest <- data.frame(matrix(nrow=0, ncol=length(cols)))
 colnames(dt_high_interest) <- cols
+# for each user who responded more than once extract the rows for that user,
+# sort it by the order of response time, and add the rows to the data frame.
 for (user in high_interest_users) {
   a <- d[user_name == user]
   a[order(a$date_time)]
   dt_high_interest <- rbind(dt_high_interest, a)
 }
+# set the data frame to a data table
 setDT(dt_high_interest)
 ```
 
