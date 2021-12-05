@@ -1,0 +1,68 @@
+---
+title: "W241 Final Project analysis"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r load draft data, warning=FALSE}
+setwd('/home/rstudio/kumarn/MIDS/w241/w241-final-project')
+d <- fread('./ad_response.csv')
+head(d)
+
+robust_se <- function(mod, type = 'HC3') { 
+  sqrt(diag(vcovHC(mod, type)))
+}
+
+cluster_se <- function(mod) {
+  coef(summary(mod, cluster=c("cluster_id")))[, 2]
+}
+```
+```{r initial data analysis, message=FALSE}
+# what is the size of the data set we're analyzing
+dim(d)
+
+# how many unique locations we've
+unique(d$geography)
+length(unique(d$geography))
+
+# call out the time period of the AD run
+start_date <- min(d$date_time)
+end_date <- max(d$date_time)
+as.Date(as.POSIXct(start_date, origin="1970-01-01"))
+as.Date(as.POSIXct(end_date, origin="1970-01-01"))
+
+# number of records in treatment Vs control
+d[ , .(counts=.N), by=treatment]
+
+# number of records by location
+ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
+  geom_bar(stat="identity") +
+  scale_x_discrete(guide=guide_axis(angle=45))
+```
+```{r get users who have responded more than once}
+high_interest_users <- d[interest_adjusted > 1]$user_name
+high_interest_users <- sort(unique(high_interest_users))
+cols <- colnames(d)
+dt_high_interest <- data.frame(matrix(nrow=0, ncol=length(cols)))
+colnames(dt_high_interest) <- cols
+for (user in high_interest_users) {
+  a <- d[user_name == user]
+  a[order(a$date_time)]
+  dt_high_interest <- rbind(dt_high_interest, a)
+}
+setDT(dt_high_interest)
+```
+
+
+
+
+
