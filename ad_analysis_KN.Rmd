@@ -41,12 +41,22 @@ as.Date(as.POSIXct(start_date, origin="1970-01-01"))
 as.Date(as.POSIXct(end_date, origin="1970-01-01"))
 
 # number of records in treatment Vs control
-d[ , .(counts=.N), by=treatment]
+d_treat_ctrl <- d[ , .(counts=.N), by=treatment]
+d_treat_ctrl
 
 # number of records by location
 ggplot(d[ , .(counts=.N), by=geography], aes(x=geography, y=counts)) + 
   geom_bar(stat="identity") +
   scale_x_discrete(guide=guide_axis(angle=45))
+
+ggplot(d_treat_ctrl , aes(x = treatment, y =counts, 
+                          fill=factor(ifelse(treatment==1, "Treatment", 
+                                             "Control")))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(name="treatment", values=c("#4C00FF", "#00E5FF")) +
+  # scale_x_discrete(colnames(d_treat_ctrl)[1]) + 
+  scale_x_discrete(labels=c("0", "1")) + 
+  labs(title='Treatment Vs Control counts')
 ```
 
 ```{r get users who have responded more than once}
@@ -70,7 +80,153 @@ for (user in high_interest_users) {
 setDT(dt_high_interest)
 ```
 
+```{r box plot by each location}
+colors <- c()
+for (city in unique(d$geography)) {
+  t <- unique(d[geography == city, treatment])
+  if (t == 0) {
+    colors = c(colors, "#4C00FF")
+  }
+  if (t == 1) {
+    colors = c(colors, "#00E5FF")
+  }
+}
+
+tmp <- boxplot(interest_final~geography, 
+               data=d,
+               main='Response from each city',
+               xaxt='n',
+               xlab='',
+               ylab='Level of reponse',
+               col=colors
+               )
+axis(1, labels=FALSE)
+text(x =  seq_along(tmp$names), y = par("usr")[3]-0.5, srt = 45, adj = 1,
+     labels = tmp$names, xpd = TRUE)
+
+legend("topleft", inset=.05, title="Treatment or Control",
+   c("Control", "Treatment"), fill=topo.colors(2), horiz=TRUE, cex=0.8)
+```
+
+```{r t-test of the treatment Vs control}
+treat <- d[treatment == 1, interest_final]
+ctrl <- d[treatment == 0, interest_final]
+
+t.test(treat, ctrl)
+```
+
+The t-test above examines across all cities if there's any difference in the mean between treatment and control across cities. Note that in the case above we can't do both treatment and control for each city. We've the entire city either under treatment or under control, but never both. Given the p-value (0.151) we're in a position to reject the Null Hypothesis that the average interest level across all cities combined we see no difference in the mean interest level between the the control and treatment groups.
+
+```{r linear regression analysis - base model, warning=FALSE}
+model1 <- lm(interest_final ~ treatment, data=d)
+summary(model1)
+stargazer(
+  model1,
+  type='text',
+  se = list(
+    robust_se(model1)
+  )
+)
+```
+The result from the linear regression shows that the treatment has no effect, which is in effect, what came out of the earlier t-test. The impact of treatment is `r summary(model1)$coefficients[2, 1]`, which is small and isn't statistically significant (p-value is `r summary(model1)$coefficients[2, 4]`).
+
+```{r linear regression analysis (con.) - model2}
+model2 <- lm(interest_final ~ treatment + geography, data=d)
+summary(model2)
+```
+The model above looking at treatment and geography is somewhat interesting. It shows that there's some statistical significance to one of the locations (Santa Clara) which seems to show that this location increases the interest level for the ad by a factors of 2, and is statistically significant.
+
+```{r linear regression analysis (con.) - model3}
+model3 <- lm(interest_final ~ treatment + population + distance + income, data=d)
+summary(model3)
+```
+The model above shows that the income has a statistically significant role to play (p-value of `rsummary(model3)$coefficients[5, 4]`). However, the impact of income (`r summary(model3)$coefficients[5, 1]`) on the interest level for purchase is quite low. For every USD 10,000 higher income the impact on interest level for purchase is `r summary(model3)$coefficients[5, 1] * 10000`. This isn't a whole lot; nevertheless statistically significant. May be that the real impact of the interest stems from higher household income than some variation in the treatment or control, though the impact of such an effect isn't whole lot higher. Whatever effect there is, however small, is statistically significant.
+
+It's also significant to note that the effect of treatment is shown as negative, though it's got no statistical significance. Suffice to say that the "treatment" (and consequently the "control" aspect) have no significant impact on the interest level.
+
+```{r compare models, warning=FALSE}
+stargazer(
+  model1, model2, model3,
+  type='text',
+  se = list(
+    robust_se(model1),
+    robust_se(model2),
+    robust_se(model3)
+  )
+)
+```
+
+```{r consider proportional income and population}
+sum_pop <- sum(d$population)
+sum_inc <- sum(d$income)
+d[ , pop_prop := population/sum_pop]
+d[ , inc_prop := income/sum_inc]
+```
+```{r use proportional values for lm, warning=FALSE}
+model4 <- lm(interest_final ~ treatment + pop_prop + distance + inc_prop, data=d)
+summary(model4)
+stargazer(
+  model4,
+  type='text',
+  se = list(
+    robust_se(model4)
+  )
+)
+```
+
+When the income and population are made proportional for each location the effect of treatment is still the same (low and statistically insignificant), while the impact of proportional income is exaggerated (and has the same statistical significance as earlier). 
+
+```{r income Vs interest level}
+mean_inc <- c()
+mean_int <- c()
+cities <- sort(unique(d$geography))
+for (city in cities) {
+  mean_inc <- c(mean_inc, d[geography==city, as.character(mean(income))])
+  mean_int <- c(mean_int, d[geography==city, 
+                            as.character(round(mean(interest_final), digits=4))
+                            ]
+                )
+}
+df <- data.frame(
+  location = cities,
+  mean_income = mean_inc,
+  mean_interest = mean_int
+)
+
+p1 <- ggplot(df, aes(x=mean_inc, y = mean_int, fill=location)) + 
+  geom_bar(stat="identity") +
+  labs(x = "Mean income", y = "Mean interest level in AD", 
+       title = "Mean interest level in AD Vs Mean imcome by location")
 
 
+#p1 <- ggplot(df, aes(x=mean_inc, y = mean_int, color=location)) + 
+#  geom_point(alpha=0.5, size=2)
 
+p1
+```
+```{r cross-effect check, warning=FALSE}
+model5 <- lm(interest_final ~ treatment + pop_prop + distance + inc_prop + 
+               (pop_prop * inc_prop), data=d)
+summary(model5)
+
+stargazer(
+  model5,
+  type='text',
+  se=list(
+    robust_se(model5)
+  )
+)
+```
+
+The results above reveals a few interesting items. 
+
+The impact of treatment seems to be practically non-existing and is statistically insignificant. Let's look at the baseline - the "Intercept". We see a value of `r summary(model5)$coefficients[1, 1]` with a p-value of `r summary(model5)$coefficients[1, 4]`. This indicates that every location, being exclusively assigned to treatment or control, has a baseline that's independent of the assignment. 
+
+The proportion of population is statistically significant (p-value of `r summary(model5)$coefficients[3, 4]`) but has a significant negative effect (`r summary(model5)$coefficients[3, 1]`). This could be explained by the fact that locations with higher population may choose public transportation instead of buying a used car. 
+
+The distance of the location from Seattle (where the car is registered) has no impact very little impact and is statistically insignificant.
+
+The proportionality of income is statistically significant (p-value of `r summary(model5)$coefficients[5, 4]`) but has a significant negative impact of `r summary(model5)$coefficients[5, 1]`. This could be that people with higher income proportion may prefer a new car instead of used one.
+
+Finally, the interaction term of population proportion and income proportion has the most impact and is statistically significant. The impact is `r summary(model5)$coefficients[6, 1]` with p-value `r summary(model5)$coefficients[6, 4]`. Possible interpretation is that in areas while individually population and income both have downward effect the interaction between population and income is such that either lower income and higher population, or higher income and lower population have a propensity to increase the interest in used car. Lower population may refer to rural areas or sparsely populated suburbs which necessitates a car. A used car as a second car may be acceptable option. Similarly, areas with lower income and higher population may be more prone to buying used cars - may be that they can negotiate more and bring down price with options such as cash payments. Given that individually population and income have negative impact on the level of interest of used cars the case of high population and high income, such as urban centers, may not want a used car. This may explain why a suburban area like Santa Clara has a lot more interest while urban center like Seattle showed lesser interest. Los Angeles may exhibit a mixed behavior - the sprawl of LA is much vast and thus we may see less people in the city of Los Angeles, closer to the suburb pretty much ignoring the AD while the outskirts may be more inclinded to look at used cars. 
 
