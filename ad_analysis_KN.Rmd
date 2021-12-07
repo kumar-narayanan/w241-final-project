@@ -59,6 +59,16 @@ ggplot(d_treat_ctrl , aes(x = treatment, y =counts,
   labs(title='Treatment Vs Control counts')
 ```
 
+```{r ad response as a function of time for each city}
+dt_freq <- d[ , .(counts=.N), by=list(geography, date)]
+ggplot(dt_freq, aes(date, counts, color=geography)) +
+  geom_line(aes(group=geography)) + 
+  geom_point(aes(shape=geography)) + 
+  scale_shape_manual(values=c(1:10)) + 
+  scale_x_discrete(guide=guide_axis(angle=45)) +
+  labs(title="AD response as a function of date")
+```
+
 ```{r get users who have responded more than once}
 # get all users who've responded more that once
 high_interest_users <- d[interest_adjusted > 1]$user_name
@@ -181,10 +191,10 @@ mean_inc <- c()
 mean_int <- c()
 cities <- sort(unique(d$geography))
 for (city in cities) {
-  mean_inc <- c(mean_inc, d[geography==city, as.character(mean(income))])
+  mean_inc <- c(mean_inc, d[geography==city, mean(income)])
   mean_int <- c(mean_int, d[geography==city, 
                             as.character(round(mean(interest_final), digits=4))
-                            ]
+                           ]
                 )
 }
 df <- data.frame(
@@ -193,11 +203,15 @@ df <- data.frame(
   mean_interest = mean_int
 )
 
-p1 <- ggplot(df, aes(x=mean_inc, y = mean_int, fill=location)) + 
+df <- df[order(df$mean_income),]
+
+df$mean_income <- as.character(df$mean_income)
+df$mean_income <- factor(df$mean_income, levels=df$mean_income)
+
+p1 <- ggplot(df, aes(x=mean_income, y=mean_interest, fill=location)) + 
   geom_bar(stat="identity") +
   labs(x = "Mean income", y = "Mean interest level in AD", 
-       title = "Mean interest level in AD Vs Mean imcome by location")
-
+       title = "Mean interest level in AD Vs Mean income by location")
 
 #p1 <- ggplot(df, aes(x=mean_inc, y = mean_int, color=location)) + 
 #  geom_point(alpha=0.5, size=2)
@@ -228,5 +242,5 @@ The distance of the location from Seattle (where the car is registered) has no i
 
 The proportionality of income is statistically significant (p-value of `r summary(model5)$coefficients[5, 4]`) but has a significant negative impact of `r summary(model5)$coefficients[5, 1]`. This could be that people with higher income proportion may prefer a new car instead of used one.
 
-Finally, the interaction term of population proportion and income proportion has the most impact and is statistically significant. The impact is `r summary(model5)$coefficients[6, 1]` with p-value `r summary(model5)$coefficients[6, 4]`. Possible interpretation is that in areas while individually population and income both have downward effect the interaction between population and income is such that either lower income and higher population, or higher income and lower population have a propensity to increase the interest in used car. Lower population may refer to rural areas or sparsely populated suburbs which necessitates a car. A used car as a second car may be acceptable option. Similarly, areas with lower income and higher population may be more prone to buying used cars - may be that they can negotiate more and bring down price with options such as cash payments. Given that individually population and income have negative impact on the level of interest of used cars the case of high population and high income, such as urban centers, may not want a used car. This may explain why a suburban area like Santa Clara has a lot more interest while urban center like Seattle showed lesser interest. Los Angeles may exhibit a mixed behavior - the sprawl of LA is much vast and thus we may see less people in the city of Los Angeles, closer to the suburb pretty much ignoring the AD while the outskirts may be more inclinded to look at used cars. 
+Finally, the interaction term of population proportion and income proportion has the most impact and is statistically significant. The impact is `r summary(model5)$coefficients[6, 1]` with p-value `r summary(model5)$coefficients[6, 4]`. Possible interpretation is that in areas while individually population and income both have downward effect the interaction between population and income is such that either lower income and higher population, or higher income and lower population have a propensity to increase the interest in used car. Lower population may refer to rural areas or sparsely populated suburbs which necessitates a car. A used car as a second car may be acceptable option. Similarly, areas with lower income and higher population may be more prone to buying used cars - may be that they can negotiate more and bring down price with options such as cash payments. Given that individually population and income have negative impact on the level of interest of used cars the case of high population and high income, such as urban centers, may not want a used car. This may explain why a suburban area like Santa Clara has a lot more interest while urban center like Seattle showed lesser interest. Los Angeles may exhibit a mixed behavior - the sprawl of LA is much vast and thus we may see less people in the city of Los Angeles, closer to the suburb pretty much ignoring the AD while the outskirts may be more inclined to look at used cars. 
 

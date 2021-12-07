@@ -25,6 +25,9 @@ library(foreign)
 library(magrittr)
 
 library(knitr)
+
+library(ggpubr)
+library(reshape2)
 ```
 
 ```{r Impact of letter style on AD response, child='./ad_analysis_1.Rmd'}
