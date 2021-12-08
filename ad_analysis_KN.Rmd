@@ -118,6 +118,21 @@ legend("topleft", inset=.05, title="Treatment or Control",
    c("Control", "Treatment"), fill=topo.colors(2), horiz=TRUE, cex=0.8)
 ```
 
+```{r test the number of response based on treatment, warning=FALSE}
+df2 <- d[ , .(counts=.N), by=list(geography, treatment)]
+model_resp <- lm(counts ~ treatment, data=df2)
+summary(model_resp)
+stargazer(
+  model_resp,
+  type='text',
+  se = list(
+    robust_se(model_resp)
+  )
+)
+```
+
+The test result above shows that we don't seem to get any impact due to treatment. The intercept carries most of the weight.
+
 ```{r t-test of the treatment Vs control}
 treat <- d[treatment == 1, interest_final]
 ctrl <- d[treatment == 0, interest_final]
