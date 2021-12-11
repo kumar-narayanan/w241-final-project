@@ -193,6 +193,7 @@ A potential issue that was uncovered during our unveiling of treatment and contr
 
 # Results
 With the analysis from 151 responses we gathered we wanted to answer if our hypothesis that all-capitalization impacts the response to a used-car online ad. While we just wanted to observed the response we were of the opinion that all-capitalization may turn users away from the ad, and that the control ad (the ones with normal level of capitalization) will attract more statistically significant response. Numerically, we received more response from locations that were part of the treatment group, even though the population size of the control group was approximately 7.4M, while that of the treatment group was 4M.
+
 ```{r response count}
 d_treat_ctrl <- d[ , .(counts=.N), by=treatment]
 
@@ -297,6 +298,8 @@ The output above shows that in all cases treatment effect is statistically insig
 The study set out to find the effect of capitalizing wordings on an online ad for a used-car. Our assumption, when we started, was that all-capitalization will impact clicks on our ads, likely negatively. Our experiment didn't find any causality between the word formatting and the response level to the ad. 
 
 As we considered additional factors that might influence people desire to buy a used car we found that mean income may have a role to play. Other factors such as where the vehicle is registered and the population density of the location had no statistically significant role to play, in the final analysis.
+
+We could potentially start looking at the effect on each of the individual "Interest Criteria" due to treatment effect and see if we find at least one such criteria showing a treatment effect. That would tantamount to the classic fishing expedition, where it would appear to show us desperate to somehow get a result. Clearly, we want to avoid this case.
 
 As described in the next section a more robust A/B test framework may be the right framework to study the impact of variation in ads.
 
