@@ -1,5 +1,7 @@
 ---
-title: "W241 Final Project analysis"
+title: "Effect of changing text in an online AD for used car"
+subtitle: "W241 Final Project - Fall 2021
+author: "Kumar Narayanan, Ryan Goding, Melinda Leung, Vishakh Pillai"
 output: pdf_document
 ---
 
@@ -53,10 +55,11 @@ ggplot(d_treat_ctrl , aes(x = treatment, y =counts,
                           fill=factor(ifelse(treatment==1, "Treatment", 
                                              "Control")))) +
   geom_bar(stat = "identity") +
-  scale_fill_manual(name="treatment", values=c("#4C00FF", "#00E5FF")) +
+  #scale_fill_manual(name="treatment", values=c("#4C00FF", "#00E5FF")) +
+  scale_fill_manual(name="treatment", values=c("gray50", "gray60")) +
   # scale_x_discrete(colnames(d_treat_ctrl)[1]) + 
   scale_x_discrete(labels=c("0", "1")) + 
-  labs(title='Treatment Vs Control counts')
+  labs(title='Treatment Vs Control counts', x = "Treatment-Control split")
 ```
 
 ```{r ad response as a function of time for each city}
@@ -96,9 +99,11 @@ for (city in unique(d$geography)) {
   t <- unique(d[geography == city, treatment])
   if (t == 0) {
     colors = c(colors, "#4C00FF")
+    #colors = c(colors, "gray50")
   }
   if (t == 1) {
     colors = c(colors, "#00E5FF")
+    #colors = c(colors, "gray70")
   }
 }
 
@@ -113,6 +118,9 @@ tmp <- boxplot(interest_final~geography,
 axis(1, labels=FALSE)
 text(x =  seq_along(tmp$names), y = par("usr")[3]-0.5, srt = 45, adj = 1,
      labels = tmp$names, xpd = TRUE)
+
+#legend("topleft", inset=.05, title="Treatment or Control",
+#   c("Control", "Treatment"), fill=c("gray50", "gray70"), horiz=TRUE, cex=0.8)
 
 legend("topleft", inset=.05, title="Treatment or Control",
    c("Control", "Treatment"), fill=topo.colors(2), horiz=TRUE, cex=0.8)
@@ -233,6 +241,19 @@ p1 <- ggplot(df, aes(x=mean_income, y=mean_interest, fill=location)) +
 
 p1
 ```
+```{r add population density}
+cities <- sort(unique(d$geography))
+cities
+pop_density <- c(2749, 7009, 3126, 4740, 2451, 4381, 7293, 9260, 3310, 2330)
+for (i in c(1:10)) {
+  d[geography == cities[i], population_density := pop_density[i]]
+}
+
+m <- lm(interest_final ~ treatment + population_density + income +
+           distance, data = d)
+
+```
+
 ```{r cross-effect check, warning=FALSE}
 model5 <- lm(interest_final ~ treatment + pop_prop + distance + inc_prop + 
                (pop_prop * inc_prop), data=d)
